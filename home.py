@@ -77,6 +77,7 @@ def display_login():
         if is_authenticated(username, password):
             st.session_state.logged_in = True
             st.session_state.username = username
+            st.experimental_rerun()  # Force rerun of the app
         else:
             st.warning("Incorrect username or password.")
 
