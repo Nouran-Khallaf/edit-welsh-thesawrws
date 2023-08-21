@@ -10,7 +10,7 @@ def load_data_for_user(username):
     conn = connect_to_db()
     cursor = conn.cursor()
     
-    # Assuming the column which indicates the user assignment is called "user"
+  
     cursor.execute('SELECT * FROM data WHERE user=?', (username,))
     data = cursor.fetchall()
     
@@ -126,7 +126,7 @@ def display_synonym_selector():
         st.session_state.checked_synonyms = synonyms.copy()
         st.session_state.last_selected_word = selected_word
 
-    col1, col2 = st.columns(2)  # Adjust the number of columns based on your needs
+    col1, col2 = st.columns(2)  # Adjust the number of columns 
 
     selected_synonyms = []
     for idx, word in enumerate(synonyms):
@@ -182,7 +182,7 @@ def display_admin_interface():
         st.success(f"Updated word range for {user_selection}")
 
 
-# Inside the main function
+# The main function
 def main():
     st.title("Word Synonym Modefier")
     
