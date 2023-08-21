@@ -50,6 +50,15 @@ def save_word_for_user(username, word, synonyms):
     conn.commit()
     conn.close()
 
+def get_progress_data(username):
+    df = load_data_for_user(username)
+    
+    total_words = len(df)
+    saved_words = df["is_saved"].sum()
+    unsaved_words = total_words - saved_words
+    
+    return unsaved_words, total_words
+
 
 
 # authentication data
@@ -84,6 +93,12 @@ def display_login():
 
 
 def display_synonym_selector():
+    unsaved_words, total_words = get_progress_data(st.session_state.username)
+    
+    # Display progress bar and associated text
+    st.text(f"Unsaved words: {unsaved_words}/{total_words}")
+    progress = (total_words - unsaved_words) / total_words  # Fraction of saved words
+    st.progress(progress)
     data_df = load_data_for_user(st.session_state.username)
 
     # Prepare the word list for the dropdown
