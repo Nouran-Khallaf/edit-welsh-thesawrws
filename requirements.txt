@@ -2,3 +2,4 @@ streamlit==0.84.0
 altair==4.1.0
 vega==3.4.0
 pandas
+sqlite3
