@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import sqlite3
+import bcrypt
 
 def connect_to_db():
     return sqlite3.connect('Data_alledited.db')
@@ -37,6 +38,8 @@ def load_data_for_user(username):
     return pd.DataFrame(data, columns=columns)
 
 
+
+
 def save_word_for_user(username, word, synonyms):
     conn = connect_to_db()
     cursor = conn.cursor()
@@ -60,23 +63,93 @@ def get_progress_data(username):
     return unsaved_words, total_words
 
 
+def hash_password(password: str) -> bytes:
+    salt = bcrypt.gensalt()  # This will generate a new random salt every time
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed
+def check_password(password: str, hashed: bytes) -> bool:
+    # Ensure password is encoded
+    if isinstance(password, str):
+        password = password.encode('utf-8')
 
-# authentication data
-USERS = {
-    "admin": {"password": "admin_pass", "start": 0, "end": -1},  
-    "user1": {"password": "user1_pass", "start": 0, "end": 100},
-    "user2": {"password": "user2_pass", "start": 100, "end": 200}
+    # Ensure hashed is encoded
+    if isinstance(hashed, str):
+        hashed = hashed.encode('utf-8')
+
+    return bcrypt.checkpw(password, hashed)
+
+def create_users_table():
+    conn = connect_to_db()
+    cursor = conn.cursor()
     
-}
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        password TEXT NOT NULL,
+        start INT NOT NULL,
+        end INT NOT NULL
+        
+    )
+    ''')
+    
+    conn.commit()
+    conn.close()
+def get_word_range_for_user(username):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT start, end FROM users WHERE username=?', (username,))
+    result = cursor.fetchone()
+    
+    conn.close()
+    
+    return result
 
+def register_user(username, password, start, end):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    hashed_password = hash_password(password)
+    cursor.execute('''
+    INSERT INTO users (username, password, start, end)
+    VALUES (?, ?, ?, ?)
+    ''', (username, hashed_password, start, end))
+    
+    conn.commit()
+    conn.close()
+def initialize_admin():
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    # Hash the 'admin_pass' password using bcrypt
+    hashed_password = bcrypt.hashpw('admin_pass'.encode('utf-8'), bcrypt.gensalt())
+    
+    cursor.execute('''
+    INSERT OR IGNORE INTO users (username, password, start, end)
+    VALUES (?, ?, ?, ?)
+    ''', ('admin', hashed_password, 0, -1))
+    
+    conn.commit()
+    conn.close()
 
-
-# Authentication function
 def is_authenticated(username, password):
-    print(f"Input Username: {username}")
-    print(f"Input Password: {password}")
-    print(f"Stored Password for {username}: {USERS.get(username, {}).get('password')}")
-    return USERS.get(username, {}).get("password") == password
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT password FROM users WHERE username=?', (username,))
+    stored_hash = cursor.fetchone()
+    conn.close()
+
+    if stored_hash is None:
+        return False
+
+    # Ensure stored_hash[0] is encoded
+    stored_hash_encoded = stored_hash[0]
+    if isinstance(stored_hash[0], str):
+        stored_hash_encoded = stored_hash[0].encode('utf-8')
+
+    return check_password(password, stored_hash_encoded)
+
+
+
 
 def display_login():
     username = st.text_input("Username")
@@ -91,7 +164,16 @@ def display_login():
             st.warning("Incorrect username or password.")
 
 
-
+def get_all_users_except_admin():
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT username FROM users WHERE username!=?', ('admin',))
+    users = cursor.fetchall()
+    
+    conn.close()
+    
+    return [user[0] for user in users]
 def display_synonym_selector():
     unsaved_words, total_words = get_progress_data(st.session_state.username)
     
@@ -157,14 +239,26 @@ def display_synonym_selector():
 
 def display_admin_interface():
     st.header("Admin Interface")
+    st.subheader("Add New User")
+    new_username = st.text_input("New Username")
+    new_password = st.text_input("New Password", type="password")
+    new_start_range = st.number_input("Start range", min_value=0)
+    new_end_range = st.number_input("End range", min_value=0)
+    
+    if st.button("Add User"):
+        register_user(new_username, new_password, new_start_range, new_end_range)
+        st.success(f"Added user: {new_username}")
+    
     st.subheader("Assign Word Ranges to Users")
 
     # Select the user
-    user_selection = st.selectbox("Select a user", list(USERS.keys())[1:])  # Excluding the admin
+    user_selection = st.selectbox("Select a user", get_all_users_except_admin())
+
 
     # Define word ranges for the user
-    start_range = st.number_input(f"Start range for {user_selection}", min_value=0, value=USERS[user_selection]['start'])
-    end_range = st.number_input(f"End range for {user_selection}", min_value=0, value=USERS[user_selection]['end'])
+    start_db, end_db = get_word_range_for_user(user_selection)
+    start_range = st.number_input(f"Start range for {user_selection}", min_value=0, value=start_db)
+    end_range = st.number_input(f"End range for {user_selection}", min_value=0, value=end_db)
 
     if st.button("Update Range"):
         conn = connect_to_db()
@@ -201,4 +295,6 @@ def main():
 
 
 if __name__ == "__main__":
+    create_users_table()
+    initialize_admin()
     main()
