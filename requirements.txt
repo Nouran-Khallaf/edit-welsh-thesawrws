@@ -1,4 +1,4 @@
-streamlit==0.80.0
+streamlit
 altair==4.1.0
 vega==3.4.0
 pandas
