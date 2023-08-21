@@ -4,16 +4,21 @@ import os
 # File to store the data
 FILE_NAME = "Data_alledited.csv"
 
-# Dummy authentication data
+# authentication data
 USERS = {
-    "admin": {"password": "admin_pass", "start": 0, "end": -1},  # Admin can see all words
-    "user1": {"password": "user1_pass", "start": 0, "end": 100},
-    "user2": {"password": "user2_pass", "start": 100, "end": 200}
+    "admin": {"password": "admin_pass", "start": 0, "end": -1, "filename": None},  
+    "user1": {"password": "user1_pass", "start": 0, "end": 100, "filename": "data_0_100.csv"},
+    "user2": {"password": "user2_pass", "start": 100, "end": 200, "filename": "data_100_200.csv"}
     # Add more users as required
 }
 
+
+
 # Authentication function
 def is_authenticated(username, password):
+    print(f"Input Username: {username}")
+    print(f"Input Password: {password}")
+    print(f"Stored Password for {username}: {USERS.get(username, {}).get('password')}")
     return USERS.get(username, {}).get("password") == password
 
 def display_login():
@@ -24,6 +29,9 @@ def display_login():
         if is_authenticated(username, password):
             st.session_state.logged_in = True
             st.session_state.username = username
+        else:
+            st.warning("Incorrect username or password.")
+
 
 
 def load_data():
@@ -33,12 +41,18 @@ def load_data():
 
 
 def display_synonym_selector():
-    global data_df
-    data_df = load_data()
-    
-    user_range = USERS[st.session_state.username]
-    data_df = data_df.iloc[user_range["start"]:user_range["end"]]
+    user_filename = USERS[st.session_state.username].get('filename')
 
+    if not user_filename:
+        st.error("Error: Filename is not set for this user. Please contact the admin.")
+        return
+
+    if not os.path.exists(user_filename):
+        st.error(f"The data file {user_filename} does not exist.")
+        return
+    
+    data_df = pd.read_csv(user_filename)
+    
     # Prepare the word list for the dropdown
     word_list = []
     for idx, row in data_df.iterrows():
@@ -97,12 +111,16 @@ def display_admin_interface():
     if st.button("Update Range"):
         USERS[user_selection]['start'] = start_range
         USERS[user_selection]['end'] = end_range
+        USERS[user_selection]['filename'] = f"data_{start_range}_{end_range}.csv"
         st.success(f"Updated word range for {user_selection}")
 
     st.subheader("All User Ranges")
     for user, details in USERS.items():
         if user != "admin":
             st.write(f"{user}: {details['start']} - {details['end']}")
+
+
+
 
 
 # Inside the main function
