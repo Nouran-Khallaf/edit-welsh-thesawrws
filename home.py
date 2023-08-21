@@ -1,15 +1,63 @@
 import streamlit as st
 import pandas as pd
 import os
-# File to store the data
-FILE_NAME = "Data_alledited.csv"
+import sqlite3
+
+def connect_to_db():
+    return sqlite3.connect('Data_alledited.db')
+
+def load_data_for_user(username):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    # Assuming the column which indicates the user assignment is called "user"
+    cursor.execute('SELECT * FROM data WHERE user=?', (username,))
+    data = cursor.fetchall()
+    
+    # Convert fetched data to pandas DataFrame
+    columns = [column[0] for column in cursor.description]
+    df = pd.DataFrame(data, columns=columns)
+    
+    conn.close()
+    return df
+
+
+def load_data_for_user(username):
+    conn = sqlite3.connect('Data_alledited.db')
+    cursor = conn.cursor()
+    # Generate synset column names
+    synset_columns = [f"synset_{i}" for i in range(1, 95)]  # 95 is exclusive
+    # Create the full query string
+    query_string = f"SELECT word, is_saved, {', '.join(synset_columns)} FROM data WHERE user=?"
+    cursor.execute(query_string, (username,))
+    data = cursor.fetchall()
+    
+    conn.close()
+    columns = ["word", 'is_saved'] + synset_columns
+    return pd.DataFrame(data, columns=columns)
+
+
+def save_word_for_user(username, word, synonyms):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+    UPDATE data
+    SET user=?, is_saved=1 
+    WHERE word=?
+    ''', (username, word))
+    
+    conn.commit()
+    conn.close()
+
+
 
 # authentication data
 USERS = {
-    "admin": {"password": "admin_pass", "start": 0, "end": -1, "filename": None},  
-    "user1": {"password": "user1_pass", "start": 0, "end": 100, "filename": "data_0_100.csv"},
-    "user2": {"password": "user2_pass", "start": 100, "end": 200, "filename": "data_100_200.csv"}
-    # Add more users as required
+    "admin": {"password": "admin_pass", "start": 0, "end": -1},  
+    "user1": {"password": "user1_pass", "start": 0, "end": 100},
+    "user2": {"password": "user2_pass", "start": 100, "end": 200}
+    
 }
 
 
@@ -34,32 +82,21 @@ def display_login():
 
 
 
-def load_data():
-    if os.path.exists(FILE_NAME):
-        return pd.read_csv(FILE_NAME)
-    return pd.DataFrame(columns=["word"])
-
-
 def display_synonym_selector():
-    user_filename = USERS[st.session_state.username].get('filename')
+    data_df = load_data_for_user(st.session_state.username)
 
-    if not user_filename:
-        st.error("Error: Filename is not set for this user. Please contact the admin.")
-        return
-
-    if not os.path.exists(user_filename):
-        st.error(f"The data file {user_filename} does not exist.")
-        return
-    
-    data_df = pd.read_csv(user_filename)
-    
     # Prepare the word list for the dropdown
     word_list = []
     for idx, row in data_df.iterrows():
         word = row["word"]
         if row["is_saved"] == 1:  # The word is saved
-            word += " (saved)"  # You can adjust this to your needs
+            word += " (saved)" 
         word_list.append(word)
+
+    # If word_list is empty, show a message and return early from the function
+    if not word_list:
+        st.warning("No words available for selection.")
+        return
 
     selected_word = st.selectbox("Select a word", word_list)
 
@@ -76,26 +113,31 @@ def display_synonym_selector():
     col1, col2 = st.columns(2)  # Adjust the number of columns based on your needs
 
     selected_synonyms = []
-    for word in synonyms:
-        if word in st.session_state.checked_synonyms:
-            if synonyms.index(word) % 2 == 0:  # Even indexed synonyms in col1
+    for idx, word in enumerate(synonyms):
+        word_str = str(word)  # Convert word to string
+        unique_key = f"{word_str}_{idx}"  # Create a unique key for each checkbox
+    
+        if word_str in st.session_state.checked_synonyms:
+            if idx % 2 == 0:  # Even indexed synonyms in col1
                 with col1:
-                    if not st.checkbox(word, value=True):
-                        st.session_state.checked_synonyms.remove(word)
+                    if not st.checkbox(word_str, value=True, key=unique_key):  # Pass the unique key
+                        st.session_state.checked_synonyms.remove(word_str)
             else:  # Odd indexed synonyms in col2
                 with col2:
-                    if not st.checkbox(word, value=True):
-                        st.session_state.checked_synonyms.remove(word)
-        selected_synonyms.append(word)
+                    if not st.checkbox(word_str, value=True, key=unique_key):  # Pass the unique key
+                        st.session_state.checked_synonyms.remove(word_str)
+        selected_synonyms.append(word_str)
+
 
     # Save Button
     if st.button("Save Word with Synonyms"):
-        # Mark the word as saved in the dataframe
-        data_df.loc[data_df['word'] == actual_selected_word, 'is_saved'] = 1
-        data_df.to_csv(FILE_NAME, index=False)
+    # Save the word to the SQLite database
+        save_word_for_user(st.session_state.username, actual_selected_word, st.session_state.checked_synonyms)
 
         st.success(f"Saved {actual_selected_word} and its synonyms.")
-        st.write(data_df)
+     
+    st.write(data_df)
+
 
 def display_admin_interface():
     st.header("Admin Interface")
@@ -109,23 +151,24 @@ def display_admin_interface():
     end_range = st.number_input(f"End range for {user_selection}", min_value=0, value=USERS[user_selection]['end'])
 
     if st.button("Update Range"):
-        USERS[user_selection]['start'] = start_range
-        USERS[user_selection]['end'] = end_range
-        USERS[user_selection]['filename'] = f"data_{start_range}_{end_range}.csv"
+        conn = connect_to_db()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+        UPDATE data
+        SET user=?
+        WHERE rowid BETWEEN ? AND ?
+        ''', (user_selection, start_range + 1, end_range + 1))  # +1 because rowid starts at 1
+
+        conn.commit()
+        conn.close()
+    
         st.success(f"Updated word range for {user_selection}")
-
-    st.subheader("All User Ranges")
-    for user, details in USERS.items():
-        if user != "admin":
-            st.write(f"{user}: {details['start']} - {details['end']}")
-
-
-
 
 
 # Inside the main function
 def main():
-    st.title("Word Synonym Selector")
+    st.title("Word Synonym Modefier")
     
     # Initialize session state
     if 'logged_in' not in st.session_state:
