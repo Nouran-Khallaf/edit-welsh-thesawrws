@@ -27,7 +27,7 @@ def load_data_for_user(username):
     conn = sqlite3.connect('Dict_alledited.db')
     cursor = conn.cursor()
     # Generate synset column names
-    synset_columns = [f"synset_{i}" for i in range(1, 95)]  # 95 is exclusive
+    synset_columns = [f"synset-{i}" for i in range(1, 95)]  # 95 is exclusive
     # Create the full query string
     query_string = f"SELECT word, is_saved, {', '.join(synset_columns)} FROM data WHERE user=?"
     cursor.execute(query_string, (username,))
