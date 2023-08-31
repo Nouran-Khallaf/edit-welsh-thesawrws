@@ -172,7 +172,10 @@ def display_synonym_selector():
     
     # Display progress bar and associated text
     st.text(f"Unsaved words: {unsaved_words}/{total_words}")
-    progress = (total_words - unsaved_words) / total_words  # Fraction of saved words
+    if total_words == 0:
+        progress = 0
+    else:
+        progress = (total_words - unsaved_words) / total_words
     st.progress(progress)
     data_df = load_data_for_user(st.session_state.username)
 
