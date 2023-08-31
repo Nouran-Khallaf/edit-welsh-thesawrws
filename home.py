@@ -287,7 +287,7 @@ def display_admin_interface():
     df = load_data_for_user("admin")
    
     # Create columns: 1/8 of the page width, 6/8 of the page width, and 1/8 of the page width.
-    left_column, center_column, right_column = st.beta_columns([1,6,1])
+    left_column, center_column, right_column = st.columns([1,6,1])
 
     # Display the dataframe in the center column
     with center_column:
