@@ -7,35 +7,24 @@ import bcrypt
 def connect_to_db():
     return sqlite3.connect('Dict_alledited.db')
 
-def load_data_for_user(username):
-    conn = connect_to_db()
-    cursor = conn.cursor()
-    
-  
-    cursor.execute('SELECT * FROM data WHERE user=?', (username,))
-    data = cursor.fetchall()
-    
-    # Convert fetched data to pandas DataFrame
-    columns = [column[0] for column in cursor.description]
-    df = pd.DataFrame(data, columns=columns)
-    
-    conn.close()
-    return df
-
 
 def load_data_for_user(username):
-    conn = sqlite3.connect('Dict_alledited.db')
-    cursor = conn.cursor()
-    # Generate synset column names
-    synset_columns = [f"synset-{i}" for i in range(1, 33)]  # 95 is exclusive
-    # Create the full query string
-    query_string = f"SELECT word, is_saved, {', '.join(synset_columns)} FROM data WHERE user=?"
-    cursor.execute(query_string, (username,))
-    data = cursor.fetchall()
+    try:
+        conn = sqlite3.connect('Dict_alledited.db')
+        cursor = conn.cursor()
+        
+        synset_columns = [f"synset-{i}" for i in range(1, 33)]  # Adjust as necessary
+        query_string = f"SELECT word, is_saved, {', '.join(synset_columns)} FROM data WHERE user=?"
+        cursor.execute(query_string, (username,))
+        data = cursor.fetchall()
+
+        conn.close()
+        
+        columns = ["word", 'is_saved'] + synset_columns
+        return pd.DataFrame(data, columns=columns)
     
-    conn.close()
-    columns = ["word", 'is_saved'] + synset_columns
-    return pd.DataFrame(data, columns=columns)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 
