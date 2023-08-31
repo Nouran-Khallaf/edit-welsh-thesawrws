@@ -3,4 +3,4 @@ altair==4.1.0
 vega==3.4.0
 pandas
 bcrypt
-perspective
+streamlit_perspective
