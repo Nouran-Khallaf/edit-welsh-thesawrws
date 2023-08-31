@@ -24,7 +24,7 @@ def load_data_for_user(username):
 
 
 def load_data_for_user(username):
-    conn = sqlite3.connect('Data_alledited.db')
+    conn = sqlite3.connect('Dict_alledited.db')
     cursor = conn.cursor()
     # Generate synset column names
     synset_columns = [f"synset_{i}" for i in range(1, 95)]  # 95 is exclusive
