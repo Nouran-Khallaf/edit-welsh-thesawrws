@@ -167,18 +167,31 @@ def get_all_users_except_admin():
     conn.close()
     
     return [user[0] for user in users]
+
+ 
 def display_synonym_selector():
+    # Ensure username is set
+    if "username" not in st.session_state:
+        st.session_state.username = "default_username"  # or prompt the user to enter a username or log in
+    
     unsaved_words, total_words = get_progress_data(st.session_state.username)
     
-    # Display progress bar and associated text
-    st.text(f"Unsaved words: {unsaved_words}/{total_words}")
+    # Handle division by zero
     if total_words == 0:
         progress = 0
     else:
         progress = (total_words - unsaved_words) / total_words
+
+    # Display progress bar and associated text
+    st.text(f"Unsaved words: {unsaved_words}/{total_words}")
     st.progress(progress)
+    
     data_df = load_data_for_user(st.session_state.username)
 
+    # Provide feedback if no data is returned
+    if data_df.empty:
+        st.warning("No data available for this user.")
+        return
     # Prepare the word list for the dropdown
     word_list = []
     for idx, row in data_df.iterrows():
