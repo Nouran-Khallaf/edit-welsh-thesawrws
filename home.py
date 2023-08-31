@@ -207,8 +207,9 @@ def display_synonym_selector():
     # Extract just the word name without "(saved)" if present
     actual_selected_word = selected_word.split(" ")[0]
 
-    # Extract synonyms
-    synonyms = data_df.loc[data_df['word'] == actual_selected_word].iloc[0, 1:-1].dropna().tolist()
+
+    # Extract synonyms, excluding 'user', 'word', and 'is_saved'
+    synonyms = data_df.loc[data_df['word'] == actual_selected_word].drop(['word', 'is_saved', 'user'], axis=1).dropna().values[0].tolist()
 
     if 'last_selected_word' not in st.session_state or st.session_state.last_selected_word != selected_word:
         st.session_state.checked_synonyms = synonyms.copy()
