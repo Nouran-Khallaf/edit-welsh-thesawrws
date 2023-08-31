@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import sqlite3
 import bcrypt
-import streamlit_perspective as perspective
+
 
 st.beta_set_page_config(layout="wide")
 def connect_to_db():
