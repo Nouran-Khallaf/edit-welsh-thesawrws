@@ -44,7 +44,7 @@ def save_word_for_user(username, word, synonyms):
 
 def get_progress_data(username):
     df = load_data_for_user(username)
-    print(df.head())
+    st.write(df)
     total_words = len(df)
     saved_words = df["is_saved"].sum()
     unsaved_words = total_words - saved_words
