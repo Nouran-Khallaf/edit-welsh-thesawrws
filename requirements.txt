@@ -4,3 +4,4 @@ vega==3.4.0
 pandas
 bcrypt
 streamlit_perspective
+streamlit_perspective
