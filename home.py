@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import sqlite3
 import bcrypt
+import streamlit_perspective as perspective
+
 
 def connect_to_db():
     return sqlite3.connect('Dict_alledited.db')
@@ -284,6 +286,7 @@ def display_admin_interface():
         st.success(f"Updated word range for {user_selection}")
     df = load_data_for_user("admin")
     st.dataframe(df)
+    perspective.perspective_table(df)
 
 # The main function
 def main():
