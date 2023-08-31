@@ -44,12 +44,16 @@ def save_word_for_user(username, word, synonyms):
 
 def get_progress_data(username):
     df = load_data_for_user(username)
-    st.write(df)
+    
+    if df is None or df.empty:
+        return 0, 0  # Return default values if df is None or empty
+
     total_words = len(df)
     saved_words = df["is_saved"].sum()
     unsaved_words = total_words - saved_words
     
     return unsaved_words, total_words
+
 
 
 def hash_password(password: str) -> bytes:
