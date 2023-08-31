@@ -5,7 +5,7 @@ import sqlite3
 import bcrypt
 
 
-st.set_page_config(layout="wide")
+
 def connect_to_db():
     return sqlite3.connect('Dict_alledited.db')
 
@@ -285,7 +285,13 @@ def display_admin_interface():
     
         st.success(f"Updated word range for {user_selection}")
     df = load_data_for_user("admin")
-    st.dataframe(df)
+   
+    # Create columns: 1/8 of the page width, 6/8 of the page width, and 1/8 of the page width.
+    left_column, center_column, right_column = st.beta_columns([1,6,1])
+
+    # Display the dataframe in the center column
+    with center_column:
+        st.dataframe(df)
     
 
 # The main function
