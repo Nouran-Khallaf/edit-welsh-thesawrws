@@ -208,7 +208,7 @@ def display_synonym_selector():
     actual_selected_word = selected_word.split(" ")[0]
 
     # Extract synonyms
-    synonyms = data_df.loc[data_df['word'] == actual_selected_word].iloc[0, 1:-1].drop(['user'], axis=1).dropna().tolist()
+    synonyms = data_df.loc[data_df['word'] == actual_selected_word].iloc[0, 1:-1], axis=1).dropna().tolist()
 
     if 'last_selected_word' not in st.session_state or st.session_state.last_selected_word != selected_word:
         st.session_state.checked_synonyms = synonyms.copy()
