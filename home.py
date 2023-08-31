@@ -5,7 +5,7 @@ import sqlite3
 import bcrypt
 
 def connect_to_db():
-    return sqlite3.connect('Data_alledited.db')
+    return sqlite3.connect('Dict_alledited.db')
 
 def load_data_for_user(username):
     conn = connect_to_db()
