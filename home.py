@@ -10,9 +10,12 @@ def connect_to_db():
 def load_data_for_user(username):
     conn = connect_to_db()
     cursor = conn.cursor()
-    
+    if username == 'admin':
+        cursor.execute('SELECT * FROM data')
+    else:
+        cursor.execute('SELECT * FROM data WHERE user=?', (username,))
   
-    cursor.execute('SELECT * FROM data WHERE user=?', (username,))
+ 
     data = cursor.fetchall()
     
     # Convert fetched data to pandas DataFrame
@@ -240,7 +243,7 @@ def display_synonym_selector():
 
         st.success(f"Saved {actual_selected_word} and its synonyms.")
      
-    st.write(data_df)
+    #st.write(data_df)
 
 def display_admin_interface():
     st.header("Admin Interface")
@@ -279,7 +282,8 @@ def display_admin_interface():
         conn.close()
     
         st.success(f"Updated word range for {user_selection}")
-
+    df = load_data_for_user(username)
+    st.write(df)
 
 # The main function
 def main():
