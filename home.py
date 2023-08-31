@@ -282,7 +282,7 @@ def display_admin_interface():
         conn.close()
     
         st.success(f"Updated word range for {user_selection}")
-    df = load_data_for_user(username)
+    df = load_data_for_user("admin")
     st.write(df)
 
 # The main function
