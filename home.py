@@ -5,7 +5,7 @@ import sqlite3
 import bcrypt
 
 
-st.beta_set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 def connect_to_db():
     return sqlite3.connect('Dict_alledited.db')
 
