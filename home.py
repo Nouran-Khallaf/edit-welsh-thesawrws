@@ -263,7 +263,7 @@ def display_synonym_selector():
 
     if st.button("Save Word with Synonyms"):
         valid_checked_synonyms = [syn for syn in st.session_state.checked_synonyms if isinstance(syn, str) and syn not in ["0", "1"]]
-        st.write(valid_checked_synonyms)
+        #st.write(valid_checked_synonyms)
         save_word_for_user(st.session_state.username, actual_selected_word, valid_checked_synonyms)
         st.success(f"Saved {actual_selected_word} and its synonyms.")
 
