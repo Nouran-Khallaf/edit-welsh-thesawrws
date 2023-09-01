@@ -262,7 +262,7 @@ def display_synonym_selector():
             st.warning(f"{new_synonym} is already in the list or is empty.")
     # Save Button
     if st.button("Save Word with Synonyms"):
-        print(st.session_state.checked_synonyms)  # Debugging print statement
+        st.write(st.session_state.checked_synonyms)  # Debugging print statement
         save_word_for_user(st.session_state.username, actual_selected_word, st.session_state.checked_synonyms)
         st.success(f"Saved {actual_selected_word} and its synonyms.")
 
