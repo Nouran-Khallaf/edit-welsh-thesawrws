@@ -27,10 +27,6 @@ def load_data_for_user(username):
     conn.close()
     return df
 
-
-
-
-
 def save_word_for_user(username, word, selected_synonyms):
     conn = connect_to_db()
     cursor = conn.cursor()
@@ -42,7 +38,7 @@ def save_word_for_user(username, word, selected_synonyms):
     WHERE word=?
     ''', (username, word))
 
-    max_synsets = 32 
+    max_synsets = 31 
     
     # First, clear all the synset columns for that word
     for i in range(1, max_synsets + 1):
@@ -266,10 +262,10 @@ def display_synonym_selector():
             st.warning(f"{new_synonym} is already in the list or is empty.")
     # Save Button
     if st.button("Save Word with Synonyms"):
-    # Save the word to the SQLite database
+        print(st.session_state.checked_synonyms)  # Debugging print statement
         save_word_for_user(st.session_state.username, actual_selected_word, st.session_state.checked_synonyms)
-
         st.success(f"Saved {actual_selected_word} and its synonyms.")
+
      
     #st.write(data_df)
 
