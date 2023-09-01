@@ -42,18 +42,22 @@ def save_word_for_user(username, word, selected_synonyms):
     WHERE word=?
     ''', (username, word))
 
-    # Now, update the synonyms
-    # First, set all synonym columns to NULL to clear out old data
-    for i in range(1, len(selected_synonyms) + 1):  # Start with 1 for 'synonym-1', 'synonym-2', etc.
-        cursor.execute(f"UPDATE data SET 'synset-{i}' = NULL WHERE word = ?", (word,))
+    max_synsets = 32 
+    
+    # First, clear all the synset columns for that word
+    for i in range(1, max_synsets + 1):
+        query = f"UPDATE data SET 'synset-{i}' = NULL WHERE word = ?"
+        cursor.execute(query, (word,))
 
     # Set the selected synonyms
     for idx, synonym in enumerate(selected_synonyms):
-        cursor.execute(f"UPDATE data SET 'synset-{idx+1}' = ? WHERE word = ?", (synonym, word))
+        query = f"UPDATE data SET 'synset-{idx+1}' = ? WHERE word = ?"
+        cursor.execute(query, (synonym, word))
 
     # Commit changes and close the connection
     conn.commit()
     conn.close()
+
 
 
 
