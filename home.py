@@ -38,10 +38,10 @@ def save_word_for_user(username, word, selected_synonyms):
     WHERE word=?
     ''', (username, word))
 
-    max_synsets = 31 
+    max_synsets = 32 
     
     # First, clear all the synset columns for that word
-    for i in range(1, max_synsets + 1):
+    for i in range(1, max_synsets):
         query = f"UPDATE data SET 'synset-{i}' = NULL WHERE word = ?"
         cursor.execute(query, (word,))
 
