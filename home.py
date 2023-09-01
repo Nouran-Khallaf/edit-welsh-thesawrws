@@ -31,18 +31,30 @@ def load_data_for_user(username):
 
 
 
-def save_word_for_user(username, word, synonyms):
+def save_word_for_user(username, word, selected_synonyms):
     conn = connect_to_db()
     cursor = conn.cursor()
-    
+
+    # First, set the word as saved for the user
     cursor.execute('''
     UPDATE data
-    SET user=?, is_saved=1 
+    SET user=?, is_saved=1
     WHERE word=?
     ''', (username, word))
-    
+
+   
+    # First, set all synonym columns to NULL to clear out old data
+    for i in range(1, len(selected_synonyms) + 1):  # Start with 1 for 'synonym-1', 'synonym-2', etc.
+        cursor.execute(f"UPDATE data SET 'synonym-{i}' = NULL WHERE word = ?", (word,))
+
+    # Set the selected synonyms
+    for idx, synonym in enumerate(selected_synonyms):
+        cursor.execute(f"UPDATE data SET 'synonym-{idx+1}' = ? WHERE word = ?", (synonym, word))
+
+    # Commit changes and close the connection
     conn.commit()
     conn.close()
+
 
 def get_progress_data(username):
     df = load_data_for_user(username)
@@ -237,7 +249,14 @@ def display_synonym_selector():
                         st.session_state.checked_synonyms.remove(word_str)
         selected_synonyms.append(word_str)
 
+    new_synonym = st.text_input("Add a new synonym:")
 
+    if st.button("Add"):
+        if new_synonym and new_synonym not in st.session_state.checked_synonyms:
+            st.session_state.checked_synonyms.append(new_synonym)
+            st.success(f"Added {new_synonym} to the list.")
+        else:
+            st.warning(f"{new_synonym} is already in the list or is empty.")
     # Save Button
     if st.button("Save Word with Synonyms"):
     # Save the word to the SQLite database
